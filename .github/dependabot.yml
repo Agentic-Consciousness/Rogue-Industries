@@ -18,7 +18,20 @@ updates:
       timezone: "Australia/Sydney"
     open-pull-requests-limit: 5
     groups:
+next:
+  patterns:
+    - "next"
+    - "eslint-config-next"
+    - "@next/*"
+  update-types:
+    - "major"
+    - "minor"
+    - "patch"
       minor-patch:
+        exclude-patterns:
+          - "next"
+          - "eslint-config-next"
+          - "@next/*"
         patterns:
           - "*"
         update-types:

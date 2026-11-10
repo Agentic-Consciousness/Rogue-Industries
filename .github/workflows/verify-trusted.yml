@@ -1,0 +1,36 @@
+name: Verify trusted ref
+
+# Same checks as Verify, only for events an outside contributor cannot fire.
+# Do not add pull_request, pull_request_target, issues, issue_comment, or any
+# other event a fork can trigger. This job runs on the personal self-hosted
+# runner, and a pull request executes the workflow file from the merge commit.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: verify-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify trusted ref
+    if: ${{ vars.PERSONAL_GITHUB_CI_ENABLED == 'true' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
+    runs-on: [personal-official]
+    container:
+      image: node:22-bookworm
+      options: --init --cpus 2 --memory 6g
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
+        with:
+          persist-credentials: false
+      - name: Trust the checked-out workspace
+        # The job container's user differs from the checkout's owner, so git refuses to read it otherwise.
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: Run the checks
+        run: bash .github/scripts/verify.sh
